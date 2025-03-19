@@ -102,6 +102,7 @@ async function main() {
     count = parseInt(answer.count, 10);
     if (count > 0) break;
   }
+
   const { ref } = await inquirer.prompt([
     {
       type: 'input',
@@ -141,9 +142,13 @@ async function main() {
     if (useProxy && proxyList.length > 0) {
       let selectedProxy;
       if (proxyMode === 'Rotating') {
-        selectedProxy = proxyList.shift();
-      } else {
         selectedProxy = proxyList[0];
+      } else { 
+        selectedProxy = proxyList.shift();
+        if (!selectedProxy) {
+          console.error(chalk.red("Tidak ada proxy yang tersisa untuk mode static."));
+          process.exit(1);
+        }
       }
       console.log("Menggunakan proxy: ", selectedProxy);
       const agent = new HttpsProxyAgent(selectedProxy);
@@ -153,7 +158,6 @@ async function main() {
 
     let accountIP = '';
     try {
-
       const ipResponse = await axios.get('https://api.ipify.org?format=json', accountAxiosConfig);
       accountIP = ipResponse.data.ip;
     } catch (error) {
