@@ -133,7 +133,7 @@ async function main() {
     console.log(chalk.cyanBright(`\n================================ ACCOUNT ${i + 1}/${count} ================================`));
 
     let accountAxiosConfig = {
-      timeout: 10000,
+      timeout: 50000,
       headers: generateRandomHeaders(),
       proxy: false
     };
