@@ -11,7 +11,7 @@ const { ProxyAgent } = pkg;
 import { SocksProxyAgent } from 'socks-proxy-agent';
 import cfonts from 'cfonts';
 
-function centerText(text, color = "blueBright") {
+function centerText(text, color = "cyanBright") {
   const terminalWidth = process.stdout.columns || 80;
   const textLength = text.length;
   const padding = Math.max(0, Math.floor((terminalWidth - textLength) / 2));
@@ -21,10 +21,25 @@ function centerText(text, color = "blueBright") {
 cfonts.say('NT Exhaust', {
   font: 'block',
   align: 'center',
-  colors: ['cyan', 'blue'],
+  colors: ['cyan', 'black'],
 });
 console.log(centerText("=== Telegram Channel 🚀 : NT Exhaust ( @NTExhaust ) ===\n", "blueBright"));
-console.log(chalk.cyanBright('============ Auto Registration Bot ===========\n'));
+console.log(chalk.yellow('============ Auto Registration Bot ===========\n'));
+
+function generateRandomHeaders() {
+  const userAgents = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.3 Safari/605.1.15',
+    'Mozilla/5.0 (Linux; Android 10; SM-G970F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Mobile Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0'
+  ];
+  const randomUserAgent = userAgents[Math.floor(Math.random() * userAgents.length)];
+  return {
+    'User-Agent': randomUserAgent,
+    'Accept': 'application/json, text/plain, */*',
+    'Accept-Language': 'en-US,en;q=0.9'
+  };
+}
 
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -117,7 +132,13 @@ async function main() {
 
   for (let i = 0; i < count; i++) {
     console.log(chalk.cyanBright(`\n================================ ACCOUNT ${i + 1}/${count} ================================`));
-    let accountAxiosConfig = { timeout: 10000 };
+
+    // Konfigurasi axios dengan timeout dan header random
+    let accountAxiosConfig = {
+      timeout: 50000,
+      headers: generateRandomHeaders()
+    };
+
     if (useProxy && proxyList.length > 0) {
       const randomProxy = proxyList[Math.floor(Math.random() * proxyList.length)];
       let agent;
@@ -137,7 +158,7 @@ async function main() {
     } catch (error) {
       accountIP = "Gagal mendapatkan IP";
     }
-    console.log(chalk.white(`IP Yang Digunakan: ${accountIP}\n`));
+    console.log(chalk.grey(`IP Yang Digunakan: ${accountIP}\n`));
 
     const wallet = Keypair.generate();
     const walletAddress = wallet.publicKey.toBase58();
@@ -175,7 +196,7 @@ async function main() {
       regSpinner.fail(chalk.red(`  Gagal untuk ${walletAddress} : ${error.message}`));
       failCount++;
     }
-    console.log(chalk.yellowBright(`\nProgress: ${i + 1}/${count} akun telah diregistrasi. (Berhasil: ${successCount}, Gagal: ${failCount})`));
+    console.log(chalk.yellow(`\nProgress: ${i + 1}/${count} akun telah diregistrasi. (Berhasil: ${successCount}, Gagal: ${failCount})`));
     console.log(chalk.cyanBright('====================================================================\n'));
 
     if (i < count - 1) {
