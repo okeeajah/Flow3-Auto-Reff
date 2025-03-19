@@ -6,12 +6,10 @@ import axios from 'axios';
 import { Keypair } from '@solana/web3.js';
 import nacl from 'tweetnacl';
 import bs58 from 'bs58';
-import pkg from 'proxy-agent';
-const { ProxyAgent } = pkg;
-import { SocksProxyAgent } from 'socks-proxy-agent';
+import { HttpsProxyAgent } from 'https-proxy-agent';
 import cfonts from 'cfonts';
 
-function centerText(text, color = "cyanBright") {
+function centerText(text, color = "blueBright") {
   const terminalWidth = process.stdout.columns || 80;
   const textLength = text.length;
   const padding = Math.max(0, Math.floor((terminalWidth - textLength) / 2));
@@ -28,9 +26,9 @@ console.log(chalk.yellow('============ Auto Registration Bot ===========\n'));
 
 function generateRandomHeaders() {
   const userAgents = [
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.3 Safari/605.1.15',
-    'Mozilla/5.0 (Linux; Android 10; SM-G970F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Mobile Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/115.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Version/14.0.3 Safari/605.1.15',
+    'Mozilla/5.0 (Linux; Android 10; SM-G970F) AppleWebKit/537.36 Chrome/115.0.0.0 Mobile Safari/537.36',
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0'
   ];
   const randomUserAgent = userAgents[Math.floor(Math.random() * userAgents.length)];
@@ -65,8 +63,9 @@ async function main() {
   ]);
 
   let proxyList = [];
+  let proxyMode = null;
   if (useProxy) {
-    const { proxyType } = await inquirer.prompt([
+    const proxyAnswer = await inquirer.prompt([
       {
         type: 'list',
         name: 'proxyType',
@@ -74,6 +73,7 @@ async function main() {
         choices: ['Rotating', 'Static'],
       }
     ]);
+    proxyMode = proxyAnswer.proxyType;
     try {
       const proxyData = fs.readFileSync('proxy.txt', 'utf8');
       proxyList = proxyData.split('\n').map(line => line.trim()).filter(Boolean);
@@ -83,6 +83,7 @@ async function main() {
     }
   }
 
+  // Input jumlah akun
   let count;
   while (true) {
     const answer = await inquirer.prompt([
@@ -103,6 +104,7 @@ async function main() {
     if (count > 0) break;
   }
 
+  // Input kode referral
   const { ref } = await inquirer.prompt([
     {
       type: 'input',
@@ -133,32 +135,35 @@ async function main() {
   for (let i = 0; i < count; i++) {
     console.log(chalk.cyanBright(`\n================================ ACCOUNT ${i + 1}/${count} ================================`));
 
-    // Konfigurasi axios dengan timeout dan header random
     let accountAxiosConfig = {
-      timeout: 50000,
-      headers: generateRandomHeaders()
+      timeout: 10000,
+      headers: generateRandomHeaders(),
+      proxy: false
     };
 
     if (useProxy && proxyList.length > 0) {
-      const randomProxy = proxyList[Math.floor(Math.random() * proxyList.length)];
-      let agent;
-      if (randomProxy.startsWith('socks5://')) {
-        agent = new SocksProxyAgent(randomProxy);
+      let selectedProxy;
+      if (proxyMode === 'Rotating') {
+        selectedProxy = proxyList.shift();
       } else {
-        agent = new ProxyAgent(randomProxy);
+        selectedProxy = proxyList[0];
       }
+      console.log("Menggunakan proxy: ", selectedProxy);
+      const agent = new HttpsProxyAgent(selectedProxy);
       accountAxiosConfig.httpAgent = agent;
       accountAxiosConfig.httpsAgent = agent;
     }
 
     let accountIP = '';
     try {
+
       const ipResponse = await axios.get('https://api.ipify.org?format=json', accountAxiosConfig);
       accountIP = ipResponse.data.ip;
     } catch (error) {
       accountIP = "Gagal mendapatkan IP";
+      console.error("Error saat mendapatkan IP:", error.message);
     }
-    console.log(chalk.grey(`IP Yang Digunakan: ${accountIP}\n`));
+    console.log(chalk.white(`IP Yang Digunakan: ${accountIP}\n`));
 
     const wallet = Keypair.generate();
     const walletAddress = wallet.publicKey.toBase58();
@@ -175,6 +180,9 @@ async function main() {
       signature: signatureBase58,
       referralCode: ref
     };
+
+    console.log(chalk.gray('Payload yang akan dikirim:'));
+    console.log(chalk.gray(JSON.stringify(payload, null, 2)));
 
     const regSpinner = ora('Mengirim data ke API...').start();
     try {
@@ -193,7 +201,7 @@ async function main() {
         console.error(chalk.red(`✖   Gagal menyimpan data ke ${fileName}: ${err.message}`));
       }
     } catch (error) {
-      regSpinner.fail(chalk.red(`  Gagal untuk ${walletAddress} : ${error.message}`));
+      regSpinner.fail(chalk.red(`✖   Gagal untuk ${walletAddress} : ${error.message}`));
       failCount++;
     }
     console.log(chalk.yellow(`\nProgress: ${i + 1}/${count} akun telah diregistrasi. (Berhasil: ${successCount}, Gagal: ${failCount})`));
@@ -204,7 +212,7 @@ async function main() {
       await countdown(randomDelay);
     }
   }
-  console.log(chalk.greenBright('\nRegistrasi selesai.'));
+  console.log(chalk.blueBright('\nRegistrasi selesai.'));
 }
 
 main();
