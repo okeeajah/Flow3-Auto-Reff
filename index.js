@@ -24,7 +24,7 @@ cfonts.say('NT Exhaust', {
   colors: ['cyan', 'blue'],
 });
 console.log(centerText("=== Telegram Channel 🚀 : NT Exhaust ( @NTExhaust ) ===\n", "blueBright"));
-console.log(chalk.magenta('============ Auto Registration Bot ===========\n'));
+console.log(chalk.cyanBright('============ Auto Registration Bot ===========\n'));
 
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
