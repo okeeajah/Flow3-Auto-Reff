@@ -83,7 +83,6 @@ async function main() {
     }
   }
 
-  // Input jumlah akun
   let count;
   while (true) {
     const answer = await inquirer.prompt([
@@ -103,8 +102,6 @@ async function main() {
     count = parseInt(answer.count, 10);
     if (count > 0) break;
   }
-
-  // Input kode referral
   const { ref } = await inquirer.prompt([
     {
       type: 'input',
@@ -180,9 +177,6 @@ async function main() {
       signature: signatureBase58,
       referralCode: ref
     };
-
-    console.log(chalk.gray('Payload yang akan dikirim:'));
-    console.log(chalk.gray(JSON.stringify(payload, null, 2)));
 
     const regSpinner = ora('Mengirim data ke API...').start();
     try {
